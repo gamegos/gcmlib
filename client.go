@@ -76,7 +76,7 @@ func (c *Client) Send(message *Message) (*Response, error) {
 
 	switch {
 	case res.StatusCode == 400:
-		return nil, &GCMError{HTTPCode: res.StatusCode, Type: InternalServerError, Message: string(body)}
+		return nil, &GCMError{HTTPCode: res.StatusCode, Type: BadRequest, Message: string(body)}
 	case res.StatusCode == 401:
 		return nil, &GCMError{HTTPCode: res.StatusCode, Type: AuthenticationError}
 	case res.StatusCode >= 500:
