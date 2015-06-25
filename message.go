@@ -10,7 +10,7 @@ type Message struct {
 	Priority              uint8  `json:"priority,omitempty"`
 	ContentAvailable      bool   `json:"content_available,omitempty"`
 	DelayWhileIdle        bool   `json:"delay_while_idle,omitempty"`
-	TTL                   int    `json:"time_to_live,omitempty"`
+	TTL                   uint   `json:"time_to_live,omitempty"`
 	RestrictedPackageName string `json:"restricted_package_name,omitempty"`
 	DryRun                bool   `json:"dry_run,omitempty"`
 
@@ -31,5 +31,5 @@ type Notification struct {
 	BodyLocKey   string `json:"body_loc_key,omitempty"`
 	BodyLocArgs  string `json:"body_loc_args,omitempty"`
 	TitleLocArgs string `json:"title_loc_args,omitempty"`
-	titleLocKey  string `json:"title_loc_key,omitempty"`
+	TitleLocKey  string `json:"title_loc_key,omitempty"`
 }
