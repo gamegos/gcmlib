@@ -1,9 +1,9 @@
 package gcm
 
 type Result struct {
-	Error          MessageError `json:"error"`
-	MessageID      string       `json:"message_id"`
-	RegistrationID string       `json:"registration_id"`
+	Error          ResultError `json:"error"`
+	MessageID      string      `json:"message_id"`
+	RegistrationID string      `json:"registration_id"`
 }
 
 func (r *Result) Failed() bool {

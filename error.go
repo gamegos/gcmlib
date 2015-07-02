@@ -38,18 +38,18 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Type.String(), e.Message)
 }
 
-// MessageError
-type MessageError string
+// ResultError
+type ResultError string
 
 // Message level error codes
 const (
-	MissingRegistration       MessageError = "MissingRegistration"
-	InvalidRegistration       MessageError = "InvalidRegistration"
-	NotRegistered             MessageError = "NotRegistered"
-	MessageTooBig             MessageError = "MessageTooBig"
-	InvalidDataKey            MessageError = "InvalidDataKey"
-	InvalidTTL                MessageError = "InvalidTtl"
-	DeviceMessageRateExceeded MessageError = "DeviceMessageRateExceeded"
-	TopicsMessageRateExceeded MessageError = "TopicsMessageRateExceeded"
-	MismatchSenderID          MessageError = "MismatchSenderId"
+	MissingRegistration       ResultError = "MissingRegistration"
+	InvalidRegistration       ResultError = "InvalidRegistration"
+	NotRegistered             ResultError = "NotRegistered"
+	MessageTooBig             ResultError = "MessageTooBig"
+	InvalidDataKey            ResultError = "InvalidDataKey"
+	InvalidTTL                ResultError = "InvalidTtl"
+	DeviceMessageRateExceeded ResultError = "DeviceMessageRateExceeded"
+	TopicsMessageRateExceeded ResultError = "TopicsMessageRateExceeded"
+	MismatchSenderID          ResultError = "MismatchSenderId"
 )
