@@ -3,7 +3,6 @@ package gcm
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -11,27 +10,6 @@ import (
 
 const (
 	gcmEndpoint = "https://gcm-http.googleapis.com/gcm/send"
-)
-
-// Request level error codes
-const (
-	BadRequest          = "BadRequest"
-	AuthenticationError = "AuthenticationError"
-	InternalServerError = "InternalServerError"
-	UnknownError        = "UnknownError"
-)
-
-// Message level error codes
-const (
-	MissingRegistrationError       = "MissingRegistration"
-	InvalidRegistrationError       = "InvalidRegistration"
-	NotRegisteredError             = "NotRegistered"
-	MessageTooBigError             = "MessageTooBig"
-	InvalidDataKeyError            = "InvalidDataKey"
-	InvalidTTLError                = "InvalidTtl"
-	DeviceMessageRateExceededError = "DeviceMessageRateExceeded"
-	TopicsMessageRateExceededError = "TopicsMessageRateExceeded"
-	MismatchSenderIDError          = "MismatchSenderId"
 )
 
 type Client struct {
@@ -57,28 +35,22 @@ func NewClientWithOptions(apiKey string, httpClient *http.Client, endpointURL *u
 	return &Client{apiKey: apiKey, httpClient: httpClient, endpoint: endpoint}
 }
 
-type GCMError struct {
-	HTTPCode    int
-	Type        string
-	Message     string
-	ShouldRetry bool
-	//@TODO consider retry-after header
-}
-
-func (e *GCMError) Error() string {
-	return fmt.Sprintf("[%s] %d: %s", e.Type, e.HTTPCode, e.Message)
-}
-
-func (c *Client) Send(message *Message) (*Response, error) {
+func (c *Client) Send(message *Message) (*Response, *Error) {
 	req, err := c.createHTTPRequest(message)
 
 	if err != nil {
-		return nil, err
+		return nil, &Error{Message: err.Error()}
 	}
 
 	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, &Error{Message: err.Error()}
+	}
 
 	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, &Error{Message: err.Error()}
+	}
 	res.Body.Close()
 
 	//log.Printf("RESPONSE: %#v\n", res)
@@ -86,21 +58,21 @@ func (c *Client) Send(message *Message) (*Response, error) {
 
 	switch {
 	case res.StatusCode == 400:
-		return nil, &GCMError{HTTPCode: res.StatusCode, Type: BadRequest, Message: string(body)}
+		return nil, &Error{Type: BadRequestError, Message: string(body)}
 	case res.StatusCode == 401:
-		return nil, &GCMError{HTTPCode: res.StatusCode, Type: AuthenticationError}
+		return nil, &Error{Type: AuthenticationError}
 	case res.StatusCode >= 500:
-		return nil, &GCMError{HTTPCode: res.StatusCode, Type: InternalServerError, ShouldRetry: true}
+		return nil, &Error{Type: InternalServerError, ShouldRetry: true}
 	case res.StatusCode != 200:
-		return nil, &GCMError{HTTPCode: res.StatusCode, Type: UnknownError, ShouldRetry: false, Message: string(body)}
+		return nil, &Error{ShouldRetry: false, Message: string(body)}
 	}
 
 	responseObj := &Response{}
 	if err := json.Unmarshal(body, responseObj); err != nil {
-		return nil, err
+		return nil, &Error{Type: ResponseParseError, Message: err.Error()}
 	}
 
-	return responseObj, err
+	return responseObj, nil
 }
 
 func (c *Client) createHTTPRequest(message *Message) (*http.Request, error) {
@@ -121,5 +93,5 @@ func (c *Client) createHTTPRequest(message *Message) (*http.Request, error) {
 
 	defer req.Body.Close()
 
-	return req, err
+	return req, nil
 }
