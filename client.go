@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 const (
@@ -33,18 +34,27 @@ const (
 	MismatchSenderIDError          = "MismatchSenderId"
 )
 
-func NewClient(apiKey string, httpClient *http.Client) *Client {
+type Client struct {
+	apiKey     string
+	httpClient *http.Client
+	endpoint   string
+}
+
+func NewClient(apiKey string) *Client {
+	return NewClientWithOptions(apiKey, nil, nil)
+}
+
+func NewClientWithOptions(apiKey string, httpClient *http.Client, endpointURL *url.URL) *Client {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
 
-	return &Client{apiKey: apiKey, httpClient: httpClient, Endpoint: gcmEndpoint}
-}
+	endpoint := gcmEndpoint
+	if endpointURL != nil {
+		endpoint = endpointURL.String()
+	}
 
-type Client struct {
-	apiKey     string
-	httpClient *http.Client
-	Endpoint   string
+	return &Client{apiKey: apiKey, httpClient: httpClient, endpoint: endpoint}
 }
 
 type GCMError struct {
@@ -99,7 +109,7 @@ func (c *Client) createHTTPRequest(message *Message) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", c.Endpoint, bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", c.endpoint, bytes.NewBuffer(body))
 
 	if err != nil {
 		return nil, err
