@@ -12,9 +12,10 @@ type Error struct {
 type ErrorCode int
 
 const (
-	BadRequestError     ErrorCode = 400
-	AuthenticationError ErrorCode = 401
-	InternalServerError ErrorCode = 500
+	BadRequestError            ErrorCode = 400
+	AuthenticationError        ErrorCode = 401
+	RequestEntityTooLargeError ErrorCode = 413
+	InternalServerError        ErrorCode = 500
 
 	ResponseParseError ErrorCode = 1000
 )
@@ -25,6 +26,8 @@ func (t ErrorCode) String() string {
 		return "Bad request"
 	case AuthenticationError:
 		return "Authentication error"
+	case RequestEntityTooLargeError:
+		return "Request entity too large"
 	case InternalServerError:
 		return "GCM server error"
 	case ResponseParseError:

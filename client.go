@@ -61,6 +61,8 @@ func (c *Client) Send(message *Message) (*Response, *Error) {
 		return nil, &Error{Type: BadRequestError, Message: string(body)}
 	case res.StatusCode == 401:
 		return nil, &Error{Type: AuthenticationError}
+	case res.StatusCode == 413:
+		return nil, &Error{Type: RequestEntityTooLargeError}
 	case res.StatusCode >= 500:
 		return nil, &Error{Type: InternalServerError, ShouldRetry: true}
 	case res.StatusCode != 200:
