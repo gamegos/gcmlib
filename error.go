@@ -3,25 +3,24 @@ package gcm
 import "fmt"
 
 // Error
-type Error struct {
-	Type        ErrorCode
+type gcmError struct {
+	Type        gcmErrorType
 	Message     string
 	ShouldRetry bool
 }
 
-type ErrorCode int
+type gcmErrorType int
 
 const (
-	BadRequestError            ErrorCode = 400
-	AuthenticationError        ErrorCode = 401
-	RequestEntityTooLargeError ErrorCode = 413
-	InternalServerError        ErrorCode = 500
-
-	ResponseParseError ErrorCode = 1000
-	ConnectionError    ErrorCode = 1001
+	BadRequestError            gcmErrorType = 400
+	AuthenticationError        gcmErrorType = 401
+	RequestEntityTooLargeError gcmErrorType = 413
+	InternalServerError        gcmErrorType = 500
+	ResponseParseError         gcmErrorType = 1000
+	ConnectionError            gcmErrorType = 1001
 )
 
-func (t ErrorCode) String() string {
+func (t gcmErrorType) String() string {
 	switch t {
 	case BadRequestError:
 		return "Bad request"
@@ -40,22 +39,21 @@ func (t ErrorCode) String() string {
 	}
 }
 
-func (e *Error) Error() string {
+func (e *gcmError) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Type.String(), e.Message)
 }
 
-// ResultError
-type ResultError string
+type resultError string
 
 // Message level error codes
 const (
-	MissingRegistration       ResultError = "MissingRegistration"
-	InvalidRegistration       ResultError = "InvalidRegistration"
-	NotRegistered             ResultError = "NotRegistered"
-	MessageTooBig             ResultError = "MessageTooBig"
-	InvalidDataKey            ResultError = "InvalidDataKey"
-	InvalidTTL                ResultError = "InvalidTtl"
-	DeviceMessageRateExceeded ResultError = "DeviceMessageRateExceeded"
-	TopicsMessageRateExceeded ResultError = "TopicsMessageRateExceeded"
-	MismatchSenderID          ResultError = "MismatchSenderId"
+	MissingRegistration       resultError = "MissingRegistration"
+	InvalidRegistration       resultError = "InvalidRegistration"
+	NotRegistered             resultError = "NotRegistered"
+	MessageTooBig             resultError = "MessageTooBig"
+	InvalidDataKey            resultError = "InvalidDataKey"
+	InvalidTTL                resultError = "InvalidTtl"
+	DeviceMessageRateExceeded resultError = "DeviceMessageRateExceeded"
+	TopicsMessageRateExceeded resultError = "TopicsMessageRateExceeded"
+	MismatchSenderID          resultError = "MismatchSenderId"
 )

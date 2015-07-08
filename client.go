@@ -35,21 +35,21 @@ func NewClientWithOptions(apiKey string, httpClient *http.Client, endpointURL *u
 	return &Client{apiKey: apiKey, httpClient: httpClient, endpoint: endpoint}
 }
 
-func (c *Client) Send(message *Message) (*Response, *Error) {
+func (c *Client) Send(message *Message) (*response, *gcmError) {
 	req, err := c.createHTTPRequest(message)
 
 	if err != nil {
-		return nil, &Error{Message: err.Error()}
+		return nil, &gcmError{Message: err.Error()}
 	}
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, &Error{Message: err.Error(), Type: ConnectionError, ShouldRetry: true}
+		return nil, &gcmError{Message: err.Error(), Type: ConnectionError, ShouldRetry: true}
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, &Error{Message: err.Error()}
+		return nil, &gcmError{Message: err.Error()}
 	}
 	res.Body.Close()
 
@@ -58,20 +58,20 @@ func (c *Client) Send(message *Message) (*Response, *Error) {
 
 	switch {
 	case res.StatusCode == 400:
-		return nil, &Error{Type: BadRequestError, Message: string(body)}
+		return nil, &gcmError{Type: BadRequestError, Message: string(body)}
 	case res.StatusCode == 401:
-		return nil, &Error{Type: AuthenticationError}
+		return nil, &gcmError{Type: AuthenticationError}
 	case res.StatusCode == 413:
-		return nil, &Error{Type: RequestEntityTooLargeError}
+		return nil, &gcmError{Type: RequestEntityTooLargeError}
 	case res.StatusCode >= 500:
-		return nil, &Error{Type: InternalServerError, ShouldRetry: true}
+		return nil, &gcmError{Type: InternalServerError, ShouldRetry: true}
 	case res.StatusCode != 200:
-		return nil, &Error{ShouldRetry: false, Message: string(body)}
+		return nil, &gcmError{ShouldRetry: false, Message: string(body)}
 	}
 
-	responseObj := &Response{}
+	responseObj := &response{}
 	if err := json.Unmarshal(body, responseObj); err != nil {
-		return nil, &Error{Type: ResponseParseError, Message: err.Error()}
+		return nil, &gcmError{Type: ResponseParseError, Message: err.Error()}
 	}
 
 	return responseObj, nil

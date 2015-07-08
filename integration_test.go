@@ -14,7 +14,7 @@ var dryRun = flag.Bool("dry", true, "Dry run")
 
 type badRequestTestCase struct {
 	message *Message
-	err     *Error
+	err     *gcmError
 }
 
 var badRequestTestCases = []badRequestTestCase{
@@ -22,14 +22,14 @@ var badRequestTestCases = []badRequestTestCase{
 		&Message{
 			RegistrationIDs: make([]RegistrationID, 1001),
 		},
-		&Error{Type: BadRequestError, Message: "Number of messages on bulk (1001) exceeds maximum allowed (1000)\n", ShouldRetry: false},
+		&gcmError{Type: BadRequestError, Message: "Number of messages on bulk (1001) exceeds maximum allowed (1000)\n", ShouldRetry: false},
 	},
 	{
 		&Message{
 			To:              "xx",
 			RegistrationIDs: []RegistrationID{"id0"},
 		},
-		&Error{Type: BadRequestError, Message: "Must use either \"registration_ids\" field or \"to\", not both\n", ShouldRetry: false},
+		&gcmError{Type: BadRequestError, Message: "Must use either \"registration_ids\" field or \"to\", not both\n", ShouldRetry: false},
 	},
 
 	// reserved "from" keyword
@@ -38,7 +38,7 @@ var badRequestTestCases = []badRequestTestCase{
 			To:   "xx",
 			Data: map[string]string{"from": "reserved test"},
 		},
-		&Error{Type: BadRequestError, Message: "\"data\" key \"from\" is a reserved keyword\n", ShouldRetry: false},
+		&gcmError{Type: BadRequestError, Message: "\"data\" key \"from\" is a reserved keyword\n", ShouldRetry: false},
 	},
 
 	// TTL
@@ -47,13 +47,13 @@ var badRequestTestCases = []badRequestTestCase{
 			To:  "JohnDoe",
 			TTL: maxTTL + 1,
 		},
-		&Error{Type: BadRequestError, Message: "Invalid value (2419201) for \"time_to_live\": must be between 0 and 2419200\n", ShouldRetry: false},
+		&gcmError{Type: BadRequestError, Message: "Invalid value (2419201) for \"time_to_live\": must be between 0 and 2419200\n", ShouldRetry: false},
 	},
 
 	// Missing registration_ids
 	{
 		&Message{},
-		&Error{Type: BadRequestError, Message: "Missing \"registration_ids\" field\n", ShouldRetry: false},
+		&gcmError{Type: BadRequestError, Message: "Missing \"registration_ids\" field\n", ShouldRetry: false},
 	},
 
 	// message too long
@@ -63,7 +63,7 @@ var badRequestTestCases = []badRequestTestCase{
 				To:           "xx",
 				Notification: &Notification{Body: strings.Repeat("a", 1024*1024)},
 			},
-			&Error{Type: RequestEntityTooLargeError, ShouldRetry: false},
+			&gcmError{Type: RequestEntityTooLargeError, ShouldRetry: false},
 		},
 	*/
 }
@@ -96,7 +96,7 @@ func TestAuthenticationError(t *testing.T) {
 	client := NewClient("invalid-api-key")
 
 	res, err := client.Send(&Message{})
-	expectedErr := &Error{Type: AuthenticationError}
+	expectedErr := &gcmError{Type: AuthenticationError}
 
 	if res != nil {
 		t.Errorf("Response: expected: %#v, actual: %#v", nil, res)
