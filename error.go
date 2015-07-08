@@ -18,6 +18,7 @@ const (
 	InternalServerError        ErrorCode = 500
 
 	ResponseParseError ErrorCode = 1000
+	ConnectionError    ErrorCode = 1001
 )
 
 func (t ErrorCode) String() string {
@@ -32,6 +33,8 @@ func (t ErrorCode) String() string {
 		return "GCM server error"
 	case ResponseParseError:
 		return "Response body is not well-formed json"
+	case ConnectionError:
+		return "Connection error"
 	default:
 		return "Unknown error"
 	}

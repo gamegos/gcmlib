@@ -44,7 +44,7 @@ func (c *Client) Send(message *Message) (*Response, *Error) {
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, &Error{Message: err.Error()}
+		return nil, &Error{Message: err.Error(), Type: ConnectionError, ShouldRetry: true}
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
