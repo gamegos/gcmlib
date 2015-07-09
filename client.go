@@ -39,17 +39,17 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 	req, err := c.createHTTPRequest(message)
 
 	if err != nil {
-		return nil, &gcmError{Message: err.Error()}
+		return nil, newError(ErrorUnknown, err.Error())
 	}
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, &gcmError{Message: err.Error(), Type: ConnectionError, ShouldRetry: true}
+		return nil, newError(ErrorConnection, err.Error())
 	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, &gcmError{Message: err.Error()}
+		return nil, newError(ErrorUnknown, err.Error())
 	}
 	res.Body.Close()
 
@@ -58,20 +58,20 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 
 	switch {
 	case res.StatusCode == 400:
-		return nil, &gcmError{Type: BadRequestError, Message: string(body)}
+		return nil, newError(ErrorBadRequest, string(body))
 	case res.StatusCode == 401:
-		return nil, &gcmError{Type: AuthenticationError}
+		return nil, newError(ErrorAuthentication, "")
 	case res.StatusCode == 413:
-		return nil, &gcmError{Type: RequestEntityTooLargeError}
+		return nil, newError(ErrorRequestEntityTooLarge, "")
 	case res.StatusCode >= 500:
-		return nil, &gcmError{Type: InternalServerError, ShouldRetry: true}
+		return nil, newError(ErrorServiceUnavailable, "")
 	case res.StatusCode != 200:
-		return nil, &gcmError{ShouldRetry: false, Message: string(body)}
+		return nil, newError(ErrorUnknown, string(body))
 	}
 
 	responseObj := &response{}
 	if err := json.Unmarshal(body, responseObj); err != nil {
-		return nil, &gcmError{Type: ResponseParseError, Message: err.Error()}
+		return nil, newError(ErrorResponseParse, err.Error())
 	}
 
 	return responseObj, nil

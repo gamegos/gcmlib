@@ -22,14 +22,14 @@ var badRequestTestCases = []badRequestTestCase{
 		&Message{
 			RegistrationIDs: make([]RegistrationID, 1001),
 		},
-		&gcmError{Type: BadRequestError, Message: "Number of messages on bulk (1001) exceeds maximum allowed (1000)\n", ShouldRetry: false},
+		newError(ErrorBadRequest, "Number of messages on bulk (1001) exceeds maximum allowed (1000)\n"),
 	},
 	{
 		&Message{
 			To:              "xx",
 			RegistrationIDs: []RegistrationID{"id0"},
 		},
-		&gcmError{Type: BadRequestError, Message: "Must use either \"registration_ids\" field or \"to\", not both\n", ShouldRetry: false},
+		newError(ErrorBadRequest, "Must use either \"registration_ids\" field or \"to\", not both\n"),
 	},
 
 	// reserved "from" keyword
@@ -38,7 +38,7 @@ var badRequestTestCases = []badRequestTestCase{
 			To:   "xx",
 			Data: map[string]string{"from": "reserved test"},
 		},
-		&gcmError{Type: BadRequestError, Message: "\"data\" key \"from\" is a reserved keyword\n", ShouldRetry: false},
+		newError(ErrorBadRequest, "\"data\" key \"from\" is a reserved keyword\n"),
 	},
 
 	// TTL
@@ -47,13 +47,13 @@ var badRequestTestCases = []badRequestTestCase{
 			To:  "JohnDoe",
 			TTL: maxTTL + 1,
 		},
-		&gcmError{Type: BadRequestError, Message: "Invalid value (2419201) for \"time_to_live\": must be between 0 and 2419200\n", ShouldRetry: false},
+		newError(ErrorBadRequest, "Invalid value (2419201) for \"time_to_live\": must be between 0 and 2419200\n"),
 	},
 
 	// Missing registration_ids
 	{
 		&Message{},
-		&gcmError{Type: BadRequestError, Message: "Missing \"registration_ids\" field\n", ShouldRetry: false},
+		newError(ErrorBadRequest, "Missing \"registration_ids\" field\n"),
 	},
 
 	// message too long
@@ -63,8 +63,7 @@ var badRequestTestCases = []badRequestTestCase{
 				To:           "xx",
 				Notification: &Notification{Body: strings.Repeat("a", 1024*1024)},
 			},
-			&gcmError{Type: RequestEntityTooLargeError, ShouldRetry: false},
-		},
+			newError(RequestEntityTooLargeError, ""),
 	*/
 }
 
@@ -78,15 +77,15 @@ func TestBadRequests(t *testing.T) {
 			t.Errorf("Response: expected: %#v, actual: %#v", nil, res)
 		}
 
-		if err.Type != tc.err.Type {
-			t.Errorf("err.Type: expected: %#v, actual: %#v", tc.err.Type, err.Type)
+		if err.Code() != tc.err.Code() {
+			t.Errorf("err.Code(): expected: %#v, actual: %#v", tc.err.Code(), err.Code())
 		}
 
-		if err.Message != tc.err.Message {
-			t.Errorf("err.Message: expected: %#v, actual: %#v", tc.err.Message, err.Message)
+		if err.Error() != tc.err.Error() {
+			t.Errorf("err.Error(): expected: %#v, actual: %#v", tc.err.Error(), err.Error())
 		}
 
-		if err.ShouldRetry != tc.err.ShouldRetry {
+		if err.ShouldRetry() != tc.err.ShouldRetry() {
 			t.Errorf("err.ShouldRetry: expected: %#v, actual: %#v", tc.err.ShouldRetry, err.ShouldRetry)
 		}
 	}
@@ -96,21 +95,21 @@ func TestAuthenticationError(t *testing.T) {
 	client := NewClient("invalid-api-key")
 
 	res, err := client.Send(&Message{})
-	expectedErr := &gcmError{Type: AuthenticationError}
+	expectedErr := newError(ErrorAuthentication, "")
 
 	if res != nil {
 		t.Errorf("Response: expected: %#v, actual: %#v", nil, res)
 	}
 
-	if err.Type != expectedErr.Type {
-		t.Errorf("err.Type: expected: %#v, actual: %#v", expectedErr.Type, err.Type)
+	if err.Code() != expectedErr.Code() {
+		t.Errorf("err.Code(): expected: %#v, actual: %#v", expectedErr.Code(), err.Code())
 	}
 
-	if err.Message != expectedErr.Message {
-		t.Errorf("err.Message: expected: %#v, actual: %#v", expectedErr.Message, err.Message)
+	if err.Error() != expectedErr.Error() {
+		t.Errorf("err.Error(): expected: %#v, actual: %#v", expectedErr.Error(), err.Error())
 	}
 
-	if err.ShouldRetry != expectedErr.ShouldRetry {
+	if err.ShouldRetry() != expectedErr.ShouldRetry() {
 		t.Errorf("err.ShouldRetry: expected: %#v, actual: %#v", expectedErr.ShouldRetry, err.ShouldRetry)
 	}
 }

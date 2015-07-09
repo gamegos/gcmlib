@@ -4,56 +4,74 @@ import "fmt"
 
 // Error
 type gcmError struct {
-	Type        gcmErrorType
-	Message     string
-	ShouldRetry bool
-}
-
-type gcmErrorType int
-
-const (
-	BadRequestError            gcmErrorType = 400
-	AuthenticationError        gcmErrorType = 401
-	RequestEntityTooLargeError gcmErrorType = 413
-	InternalServerError        gcmErrorType = 500
-	ResponseParseError         gcmErrorType = 1000
-	ConnectionError            gcmErrorType = 1001
-)
-
-func (t gcmErrorType) String() string {
-	switch t {
-	case BadRequestError:
-		return "Bad request"
-	case AuthenticationError:
-		return "Authentication error"
-	case RequestEntityTooLargeError:
-		return "Request entity too large"
-	case InternalServerError:
-		return "GCM server error"
-	case ResponseParseError:
-		return "Response body is not well-formed json"
-	case ConnectionError:
-		return "Connection error"
-	default:
-		return "Unknown error"
-	}
+	code    gcmErrorCode
+	message string
 }
 
 func (e *gcmError) Error() string {
-	return fmt.Sprintf("[%s] %s", e.Type.String(), e.Message)
+	return fmt.Sprintf("%s: %s", e.code.String(), e.message)
+}
+
+func (e *gcmError) ShouldRetry() bool {
+	return e.code == ErrorConnection || e.code == ErrorServiceUnavailable
+}
+
+func (e *gcmError) Code() gcmErrorCode {
+	return e.code
+}
+
+func newError(errorCode gcmErrorCode, message string) *gcmError {
+	return &gcmError{code: errorCode, message: message}
+}
+
+type gcmErrorCode int
+
+// Errors
+const (
+	ErrorUnknown               gcmErrorCode = 1
+	ErrorBadRequest            gcmErrorCode = 400
+	ErrorAuthentication        gcmErrorCode = 401
+	ErrorRequestEntityTooLarge gcmErrorCode = 413
+	ErrorServiceUnavailable    gcmErrorCode = 500
+	ErrorResponseParse         gcmErrorCode = 1000
+	ErrorConnection            gcmErrorCode = 1001
+)
+
+func (t gcmErrorCode) String() string {
+	switch t {
+	case ErrorBadRequest:
+		return "bad request"
+	case ErrorAuthentication:
+		return "authentication error"
+	case ErrorRequestEntityTooLarge:
+		return "request entity too large"
+	case ErrorServiceUnavailable:
+		return "gcm service unavailable"
+	case ErrorResponseParse:
+		return "response body is not well-formed json"
+	case ErrorConnection:
+		return "connection error"
+	default:
+		return "unknown error"
+	}
 }
 
 type resultError string
 
-// Message level error codes
+// Result-level error codes can be found in response.Results for each individual
+// recipient.
+// See https://developers.google.com/cloud-messaging/server-ref#error-codes
 const (
-	MissingRegistration       resultError = "MissingRegistration"
-	InvalidRegistration       resultError = "InvalidRegistration"
-	NotRegistered             resultError = "NotRegistered"
-	MessageTooBig             resultError = "MessageTooBig"
-	InvalidDataKey            resultError = "InvalidDataKey"
-	InvalidTTL                resultError = "InvalidTtl"
-	DeviceMessageRateExceeded resultError = "DeviceMessageRateExceeded"
-	TopicsMessageRateExceeded resultError = "TopicsMessageRateExceeded"
-	MismatchSenderID          resultError = "MismatchSenderId"
+	ResultErrorMissingRegistration       resultError = "MissingRegistration"
+	ResultErrorInvalidRegistration       resultError = "InvalidRegistration"
+	ResultErrorNotRegistered             resultError = "NotRegistered"
+	ResultErrorMessageTooBig             resultError = "MessageTooBig"
+	ResultErrorInvalidDataKey            resultError = "InvalidDataKey"
+	ResultErrorInvalidTTL                resultError = "InvalidTtl"
+	ResultErrorDeviceMessageRateExceeded resultError = "DeviceMessageRateExceeded"
+	ResultErrorTopicsMessageRateExceeded resultError = "TopicsMessageRateExceeded"
+	ResultErrorMismatchSenderID          resultError = "MismatchSenderId"
+	ResultErrorInvalidPackageName        resultError = "InvalidPackageName"
+	ResultErrorInternalServerError       resultError = "InternalServerError"
+	ResultErrorUnavailable               resultError = "Unavailable"
 )
