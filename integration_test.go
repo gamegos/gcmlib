@@ -1,6 +1,6 @@
 // +build integration
 
-package gcm
+package gcmlib
 
 import (
 	"flag"

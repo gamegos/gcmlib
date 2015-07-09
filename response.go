@@ -1,4 +1,4 @@
-package gcm
+package gcmlib
 
 type result struct {
 	Error          resultError `json:"error"`

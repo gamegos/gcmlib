@@ -1,4 +1,4 @@
-package gcm
+package gcmlib
 
 import (
 	"reflect"
