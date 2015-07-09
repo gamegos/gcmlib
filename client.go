@@ -48,7 +48,7 @@ func NewClientWithOptions(options *Options) *Client {
 }
 
 func (c *Client) Send(message *Message) (*response, *gcmError) {
-	req, err := c.createHTTPRequest(message)
+	req, err := createHTTPRequest(message, c.endpoint, c.apiKey)
 
 	if err != nil {
 		return nil, newError(ErrorUnknown, err.Error())
@@ -89,19 +89,19 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 	return responseObj, nil
 }
 
-func (c *Client) createHTTPRequest(message *Message) (*http.Request, error) {
+func createHTTPRequest(message *Message, endpoint string, apiKey string) (*http.Request, error) {
 	body, err := json.Marshal(message)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", c.endpoint, bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 	defer req.Body.Close()
 
-	req.Header.Set("Authorization", "key="+c.apiKey)
+	req.Header.Set("Authorization", "key="+apiKey)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
