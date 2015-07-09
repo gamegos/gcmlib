@@ -46,12 +46,12 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 	if err != nil {
 		return nil, newError(ErrorConnection, err.Error())
 	}
+	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, newError(ErrorUnknown, err.Error())
 	}
-	res.Body.Close()
 
 	//log.Printf("RESPONSE: %#v\n", res)
 	//log.Printf("BODY: %#v\n", string(body))
@@ -84,16 +84,14 @@ func (c *Client) createHTTPRequest(message *Message) (*http.Request, error) {
 	}
 
 	req, err := http.NewRequest("POST", c.endpoint, bytes.NewBuffer(body))
-
 	if err != nil {
 		return nil, err
 	}
+	defer req.Body.Close()
 
 	req.Header.Set("Authorization", "key="+c.apiKey)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
-
-	defer req.Body.Close()
 
 	return req, nil
 }
