@@ -12,6 +12,7 @@ const (
 	gcmEndpoint = "https://gcm-http.googleapis.com/gcm/send"
 )
 
+// The Client type encapsulates
 type Client struct {
 	apiKey     string
 	httpClient *http.Client

@@ -10,8 +10,8 @@ var messageValidateTests = []struct {
 	err error
 }{
 	{&Message{}, errNoRegID},
-	{&Message{To: "foo", RegistrationIDs: []RegistrationID{"id0"}}, errBothToAndRegID},
-	{&Message{RegistrationIDs: make([]RegistrationID, 1001)}, errExceedMaxRegIDs},
+	{&Message{To: "foo", RegistrationIDs: []string{"id0"}}, errBothToAndRegID},
+	{&Message{RegistrationIDs: make([]string, 1001)}, errExceedMaxRegIDs},
 	{&Message{To: "foo", TTL: maxTTL + 1}, errInvalidTTL},
 	{&Message{To: "foo", Priority: maxPriority + 1}, errInvalidPriority},
 	{&Message{To: "foo", Data: map[string]string{"from": "bar"}}, errReservedDataKey},

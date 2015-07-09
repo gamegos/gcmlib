@@ -20,14 +20,14 @@ type badRequestTestCase struct {
 var badRequestTestCases = []badRequestTestCase{
 	{
 		&Message{
-			RegistrationIDs: make([]RegistrationID, 1001),
+			RegistrationIDs: make([]string, 1001),
 		},
 		newError(ErrorBadRequest, "Number of messages on bulk (1001) exceeds maximum allowed (1000)\n"),
 	},
 	{
 		&Message{
 			To:              "xx",
-			RegistrationIDs: []RegistrationID{"id0"},
+			RegistrationIDs: []string{"id0"},
 		},
 		newError(ErrorBadRequest, "Must use either \"registration_ids\" field or \"to\", not both\n"),
 	},
@@ -121,7 +121,7 @@ func TestSuccess(t *testing.T) {
 
 	client := NewClient(*apiKey)
 	msg := &Message{
-		To:           RegistrationID(*regID),
+		To:           *regID,
 		DryRun:       *dryRun,
 		Notification: &Notification{Title: "gcm integration test message"},
 	}
@@ -150,7 +150,7 @@ func TestChangedRegistrationID(t *testing.T) {
 
 	client := NewClient(*apiKey)
 	msg := &Message{
-		To:           RegistrationID(*changedRegID),
+		To:           *changedRegID,
 		DryRun:       *dryRun,
 		Notification: &Notification{Title: "gcm integration test message"},
 	}

@@ -12,12 +12,10 @@ const (
 	maxPriority        = 10
 )
 
-type RegistrationID string
-
 type Message struct {
 	// Targets
-	To              RegistrationID   `json:"to,omitempty"`
-	RegistrationIDs []RegistrationID `json:"registration_ids"`
+	To              string   `json:"to,omitempty"`
+	RegistrationIDs []string `json:"registration_ids"`
 
 	// Options
 	CollapseKey           string `json:"collapse_key,omitempty"`
