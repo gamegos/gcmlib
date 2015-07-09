@@ -18,21 +18,33 @@ type Client struct {
 	endpoint   string
 }
 
-func NewClient(apiKey string) *Client {
-	return NewClientWithOptions(apiKey, nil, nil)
+type Options struct {
+	APIKey     string
+	HTTPClient *http.Client
+	Endpoint   *url.URL
 }
 
-func NewClientWithOptions(apiKey string, httpClient *http.Client, endpointURL *url.URL) *Client {
-	if httpClient == nil {
+func NewClient(apiKey string) *Client {
+	return NewClientWithOptions(&Options{APIKey: apiKey})
+}
+
+func NewClientWithOptions(options *Options) *Client {
+	var httpClient *http.Client
+	var endpoint string
+
+	if options.HTTPClient != nil {
+		httpClient = options.HTTPClient
+	} else {
 		httpClient = http.DefaultClient
 	}
 
-	endpoint := gcmEndpoint
-	if endpointURL != nil {
-		endpoint = endpointURL.String()
+	if options.Endpoint != nil {
+		endpoint = options.Endpoint.String()
+	} else {
+		endpoint = gcmEndpoint
 	}
 
-	return &Client{apiKey: apiKey, httpClient: httpClient, endpoint: endpoint}
+	return &Client{apiKey: options.APIKey, httpClient: httpClient, endpoint: endpoint}
 }
 
 func (c *Client) Send(message *Message) (*response, *gcmError) {
