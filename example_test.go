@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleClient_Send() {
-	client := gcmlib.NewClient("your-gcm-api-key")
+	client := gcmlib.NewClient(&gcmlib.Options{APIKey: "your-gcm-api-key"})
 	message := &gcmlib.Message{
 		RegistrationIDs: []string{"registrationID1", "registrationID2"},
 		Notification: &gcmlib.Notification{

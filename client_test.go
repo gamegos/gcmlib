@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestNewClientWithOptions(t *testing.T) {
+func TestNewClient(t *testing.T) {
 	apiKey := "bar"
 	customHTTPClient := &http.Client{}
 	customURL := "https://example.org"
@@ -38,20 +38,10 @@ func TestNewClientWithOptions(t *testing.T) {
 	}
 
 	for _, tt := range clientTests {
-		have, want := NewClientWithOptions(tt.opts), tt.out
+		have, want := NewClient(tt.opts), tt.out
 		if !reflect.DeepEqual(have, want) {
-			t.Errorf("NewClientWithOptions(%q): have: %#v, want: %#v\n", tt.opts, have, want)
+			t.Errorf("NewClient(%q): have: %#v, want: %#v\n", tt.opts, have, want)
 		}
-	}
-}
-
-func TestNewClient(t *testing.T) {
-	apiKey := "foo"
-	have := NewClient(apiKey)
-	want := &Client{apiKey: apiKey, httpClient: http.DefaultClient, endpoint: gcmEndpoint}
-
-	if !reflect.DeepEqual(have, want) {
-		t.Errorf("NewClient(%q): have: %#v, want: %#v\n", apiKey, have, want)
 	}
 }
 
@@ -136,7 +126,7 @@ func TestSend(t *testing.T) {
 		server, httpClient := mockHTTPServerAndClient(tt.response)
 		endpoint, _ := url.Parse(server.URL)
 
-		client := NewClientWithOptions(&Options{HTTPClient: httpClient, Endpoint: endpoint})
+		client := NewClient(&Options{HTTPClient: httpClient, Endpoint: endpoint})
 
 		haveRes, haveErr := client.Send(&Message{})
 		server.Close()

@@ -25,11 +25,7 @@ type Options struct {
 	Endpoint   *url.URL
 }
 
-func NewClient(apiKey string) *Client {
-	return NewClientWithOptions(&Options{APIKey: apiKey})
-}
-
-func NewClientWithOptions(options *Options) *Client {
+func NewClient(options *Options) *Client {
 	var httpClient *http.Client
 	var endpoint string
 

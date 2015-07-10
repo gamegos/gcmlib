@@ -68,7 +68,7 @@ var badRequestTestCases = []badRequestTestCase{
 }
 
 func TestBadRequests(t *testing.T) {
-	client := NewClient(*apiKey)
+	client := NewClient(&Options{APIKey: *apiKey})
 
 	for _, tc := range badRequestTestCases {
 		res, err := client.Send(tc.message)
@@ -92,7 +92,7 @@ func TestBadRequests(t *testing.T) {
 }
 
 func TestAuthenticationError(t *testing.T) {
-	client := NewClient("invalid-api-key")
+	client := NewClient(&Options{APIKey: "invalid-api-key"})
 
 	res, err := client.Send(&Message{})
 	expectedErr := newError(ErrorAuthentication, "")
@@ -119,7 +119,7 @@ func TestSuccess(t *testing.T) {
 		t.Skip("skipping success test since no 'regid' parameter provided")
 	}
 
-	client := NewClient(*apiKey)
+	client := NewClient(&Options{APIKey: *apiKey})
 	msg := &Message{
 		To:           *regID,
 		DryRun:       *dryRun,
@@ -148,7 +148,7 @@ func TestChangedRegistrationID(t *testing.T) {
 		t.Skip("skipping 'changed registration id' test since no 'cregid' parameter provided")
 	}
 
-	client := NewClient(*apiKey)
+	client := NewClient(&Options{APIKey: *apiKey})
 	msg := &Message{
 		To:           *changedRegID,
 		DryRun:       *dryRun,
