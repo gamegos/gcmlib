@@ -1,5 +1,7 @@
 # gcmlib
 
+[![Build Status](https://travis-ci.org/gamegos/gcmlib.svg?branch=master)](https://travis-ci.org/gamegos/gcmlib)
+
 Golang Google Cloud Messaging(GCM) library.
 
 
