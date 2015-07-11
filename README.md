@@ -18,35 +18,25 @@ import "github.com/gamegos/gcmlib"
 ## Example Usage
 
 ```go
-package main
-
-import (
-	"fmt"
-
-	"github.com/gamegos/gcmlib"
-)
-
-func main() {
-	client := gcmlib.NewClient("your-gcm-api-key")
-	message := &gcmlib.Message{
-		RegistrationIDs: []string{"registrationID1", "registrationID2"},
-		Notification: &gcmlib.Notification{
-			Title: "Example GCM message",
-			Body:  "Hello world",
-		},
-		Data: map[string]string{
-			"customKey": "custom value",
-		},
-	}
-
-	response, err := client.Send(message)
-	if err != nil {
-		fmt.Printf("Error: %#v\n", err)
-		return
-	}
-
-	fmt.Printf("Success: %#v\n", response)
+client := gcmlib.NewClient(&gcmlib.Options{APIKey: "your-gcm-api-key"})
+message := &gcmlib.Message{
+	RegistrationIDs: []string{"registrationID1", "registrationID2"},
+	Notification: &gcmlib.Notification{
+		Title: "Example GCM message",
+		Body:  "Hello world",
+	},
+	Data: map[string]string{
+		"customKey": "custom value",
+	},
 }
+
+response, err := client.Send(message)
+if err != nil {
+	fmt.Printf("Error: %#v\n", err)
+	return
+}
+
+fmt.Printf("Success: %#v\n", response)
 
 ```
 
