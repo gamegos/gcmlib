@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 const (
@@ -17,12 +18,14 @@ type Client struct {
 	apiKey     string
 	httpClient *http.Client
 	endpoint   string
+	maxRetries uint
 }
 
 type Options struct {
 	APIKey     string
 	HTTPClient *http.Client
 	Endpoint   *url.URL
+	MaxRetries uint
 }
 
 func NewClient(options *Options) *Client {
@@ -41,10 +44,36 @@ func NewClient(options *Options) *Client {
 		endpoint = gcmEndpoint
 	}
 
-	return &Client{apiKey: options.APIKey, httpClient: httpClient, endpoint: endpoint}
+	return &Client{
+		apiKey:     options.APIKey,
+		httpClient: httpClient,
+		endpoint:   endpoint,
+		maxRetries: options.MaxRetries,
+	}
 }
 
 func (c *Client) Send(message *Message) (*response, *gcmError) {
+	r := uint(0)
+	for {
+		res, err := c.doSend(message)
+		if err == nil {
+			return res, nil
+		}
+
+		if !err.ShouldRetry() || c.maxRetries < 1 {
+			return nil, err
+		}
+
+		if r == c.maxRetries {
+			return nil, err
+		}
+
+		time.Sleep((1 << r) * 400 * time.Millisecond)
+		r++
+	}
+}
+
+func (c *Client) doSend(message *Message) (*response, *gcmError) {
 	req, err := createHTTPRequest(message, c.endpoint, c.apiKey)
 
 	if err != nil {

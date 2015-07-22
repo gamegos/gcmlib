@@ -73,8 +73,11 @@ type mockResponse struct {
 	headers    map[string]string
 }
 
-func mockHTTPServerAndClient(res *mockResponse) (*httptest.Server, *http.Client) {
+func mockHTTPServerAndClient(responses ...*mockResponse) (*httptest.Server, *http.Client) {
+	i := 0
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		res := responses[i]
+		i++
 		w.WriteHeader(res.statusCode)
 		for k, v := range res.headers {
 			w.Header().Set(k, v)
@@ -139,4 +142,63 @@ func TestSend(t *testing.T) {
 			t.Errorf("Send/error: have: %#v, want: %#v\n", haveErr, tt.wantError)
 		}
 	}
+}
+
+var resp500 = &mockResponse{500, "Internal Server Error", nil}
+var resp200 = &mockResponse{200, "{\"multicast_id\":1,\"success\":1,\"failure\":0,\"canonical_ids\":0,\"results\":[{\"message_id\":\"x\"}]}", nil}
+
+var sendRetryTests = []struct {
+	response      []*mockResponse
+	wantResponse  *response
+	wantError     *gcmError
+	clientOptions *Options
+}{
+	// retry & fail
+	{
+		[]*mockResponse{resp500, resp500, resp500, resp500},
+		nil,
+		newError(ErrorServiceUnavailable, ""),
+		&Options{MaxRetries: 3},
+	},
+
+	// retry & success
+	{
+		[]*mockResponse{resp500, resp500, resp500, resp500, resp200},
+		&response{
+			MulticastID: 1,
+			Success:     1,
+			Results:     []result{result{MessageID: "x"}},
+		},
+		nil,
+		&Options{MaxRetries: 4},
+	},
+}
+
+func TestRetry(t *testing.T) {
+	for _, tt := range sendRetryTests {
+		server, httpClient := mockHTTPServerAndClient(tt.response...)
+		endpoint, _ := url.Parse(server.URL)
+
+		opts := tt.clientOptions
+		if opts == nil {
+			opts = &Options{}
+		}
+
+		opts.Endpoint = endpoint
+		opts.HTTPClient = httpClient
+
+		client := NewClient(opts)
+
+		haveRes, haveErr := client.Send(&Message{})
+		server.Close()
+
+		if !reflect.DeepEqual(haveRes, tt.wantResponse) {
+			t.Errorf("Send/response: have: %#v, want: %#v\n", haveRes, tt.wantResponse)
+		}
+
+		if !reflect.DeepEqual(haveErr, tt.wantError) {
+			t.Errorf("Send/error: have: %#v, want: %#v\n", haveErr, tt.wantError)
+		}
+	}
+
 }
