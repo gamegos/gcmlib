@@ -3,14 +3,18 @@ package gcmlib_test
 import (
 	"fmt"
 
-	"github.com/gamegos/gcmlib"
+	gcm "github.com/gamegos/gcmlib"
 )
 
 func ExampleClient_Send() {
-	client := gcmlib.NewClient(&gcmlib.Options{APIKey: "your-gcm-api-key"})
-	message := &gcmlib.Message{
+	client := gcm.NewClient(gcm.Config{
+		APIKey:     "your-gcm-api-key",
+		MaxRetries: 4,
+	})
+
+	message := &gcm.Message{
 		RegistrationIDs: []string{"registrationID1", "registrationID2"},
-		Notification: &gcmlib.Notification{
+		Notification: &gcm.Notification{
 			Title: "Example GCM message",
 			Body:  "Hello world",
 		},

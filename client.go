@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"time"
 )
 
@@ -15,41 +14,26 @@ const (
 
 // The Client type encapsulates
 type Client struct {
-	apiKey     string
-	httpClient *http.Client
-	endpoint   string
-	maxRetries uint
+	config *Config
 }
 
-type Options struct {
+type Config struct {
 	APIKey     string
 	HTTPClient *http.Client
-	Endpoint   *url.URL
+	Endpoint   string
 	MaxRetries uint
 }
 
-func NewClient(options *Options) *Client {
-	var httpClient *http.Client
-	var endpoint string
-
-	if options.HTTPClient != nil {
-		httpClient = options.HTTPClient
-	} else {
-		httpClient = http.DefaultClient
+func NewClient(config Config) *Client {
+	if config.HTTPClient == nil {
+		config.HTTPClient = http.DefaultClient
 	}
 
-	if options.Endpoint != nil {
-		endpoint = options.Endpoint.String()
-	} else {
-		endpoint = gcmEndpoint
+	if config.Endpoint == "" {
+		config.Endpoint = gcmEndpoint
 	}
 
-	return &Client{
-		apiKey:     options.APIKey,
-		httpClient: httpClient,
-		endpoint:   endpoint,
-		maxRetries: options.MaxRetries,
-	}
+	return &Client{config: &config}
 }
 
 func (c *Client) Send(message *Message) (*response, *gcmError) {
@@ -60,11 +44,11 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 			return res, nil
 		}
 
-		if !err.ShouldRetry() || c.maxRetries < 1 {
+		if !err.ShouldRetry() || c.config.MaxRetries < 1 {
 			return nil, err
 		}
 
-		if r == c.maxRetries {
+		if r == c.config.MaxRetries {
 			return nil, err
 		}
 
@@ -74,13 +58,13 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 }
 
 func (c *Client) doSend(message *Message) (*response, *gcmError) {
-	req, err := createHTTPRequest(message, c.endpoint, c.apiKey)
+	req, err := createHTTPRequest(message, c.config.Endpoint, c.config.APIKey)
 
 	if err != nil {
 		return nil, newError(ErrorUnknown, err.Error())
 	}
 
-	res, err := c.httpClient.Do(req)
+	res, err := c.config.HTTPClient.Do(req)
 	if err != nil {
 		return nil, newError(ErrorConnection, err.Error())
 	}

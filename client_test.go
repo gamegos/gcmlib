@@ -13,27 +13,26 @@ func TestNewClient(t *testing.T) {
 	apiKey := "bar"
 	customHTTPClient := &http.Client{}
 	customURL := "https://example.org"
-	customEndpoint, _ := url.Parse(customURL)
 
 	var clientTests = []struct {
-		opts *Options
+		opts Config
 		out  *Client
 	}{
 		{
-			&Options{APIKey: apiKey},
-			&Client{apiKey: apiKey, httpClient: http.DefaultClient, endpoint: gcmEndpoint},
+			Config{APIKey: apiKey},
+			&Client{&Config{APIKey: apiKey, HTTPClient: http.DefaultClient, Endpoint: gcmEndpoint}},
 		},
 		{
-			&Options{HTTPClient: customHTTPClient},
-			&Client{apiKey: "", httpClient: customHTTPClient, endpoint: gcmEndpoint},
+			Config{HTTPClient: customHTTPClient},
+			&Client{&Config{APIKey: "", HTTPClient: customHTTPClient, Endpoint: gcmEndpoint}},
 		},
 		{
-			&Options{Endpoint: customEndpoint},
-			&Client{apiKey: "", httpClient: http.DefaultClient, endpoint: customURL},
+			Config{Endpoint: customURL},
+			&Client{&Config{APIKey: "", HTTPClient: http.DefaultClient, Endpoint: customURL}},
 		},
 		{
-			&Options{APIKey: apiKey, Endpoint: customEndpoint, HTTPClient: customHTTPClient},
-			&Client{apiKey: apiKey, httpClient: customHTTPClient, endpoint: customURL},
+			Config{APIKey: apiKey, Endpoint: customURL, HTTPClient: customHTTPClient},
+			&Client{&Config{APIKey: apiKey, HTTPClient: customHTTPClient, Endpoint: customURL}},
 		},
 	}
 
@@ -127,9 +126,8 @@ var sendTests = []struct {
 func TestSend(t *testing.T) {
 	for _, tt := range sendTests {
 		server, httpClient := mockHTTPServerAndClient(tt.response)
-		endpoint, _ := url.Parse(server.URL)
 
-		client := NewClient(&Options{HTTPClient: httpClient, Endpoint: endpoint})
+		client := NewClient(Config{HTTPClient: httpClient, Endpoint: server.URL})
 
 		haveRes, haveErr := client.Send(&Message{})
 		server.Close()
@@ -148,17 +146,17 @@ var resp500 = &mockResponse{500, "Internal Server Error", nil}
 var resp200 = &mockResponse{200, "{\"multicast_id\":1,\"success\":1,\"failure\":0,\"canonical_ids\":0,\"results\":[{\"message_id\":\"x\"}]}", nil}
 
 var sendRetryTests = []struct {
-	response      []*mockResponse
-	wantResponse  *response
-	wantError     *gcmError
-	clientOptions *Options
+	response     []*mockResponse
+	wantResponse *response
+	wantError    *gcmError
+	clientConfig Config
 }{
 	// retry & fail
 	{
 		[]*mockResponse{resp500, resp500, resp500, resp500},
 		nil,
 		newError(ErrorServiceUnavailable, ""),
-		&Options{MaxRetries: 3},
+		Config{MaxRetries: 3},
 	},
 
 	// retry & success
@@ -170,21 +168,17 @@ var sendRetryTests = []struct {
 			Results:     []result{result{MessageID: "x"}},
 		},
 		nil,
-		&Options{MaxRetries: 4},
+		Config{MaxRetries: 4},
 	},
 }
 
 func TestRetry(t *testing.T) {
 	for _, tt := range sendRetryTests {
 		server, httpClient := mockHTTPServerAndClient(tt.response...)
-		endpoint, _ := url.Parse(server.URL)
 
-		opts := tt.clientOptions
-		if opts == nil {
-			opts = &Options{}
-		}
+		opts := tt.clientConfig
 
-		opts.Endpoint = endpoint
+		opts.Endpoint = server.URL
 		opts.HTTPClient = httpClient
 
 		client := NewClient(opts)
