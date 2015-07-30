@@ -9,43 +9,8 @@ import (
 	"testing"
 )
 
-func TestNewClient(t *testing.T) {
-	apiKey := "bar"
-	customHTTPClient := &http.Client{}
-	customURL := "https://example.org"
-
-	var clientTests = []struct {
-		opts Config
-		out  *Client
-	}{
-		{
-			Config{APIKey: apiKey},
-			&Client{&Config{APIKey: apiKey, HTTPClient: http.DefaultClient, Endpoint: gcmEndpoint}},
-		},
-		{
-			Config{HTTPClient: customHTTPClient},
-			&Client{&Config{APIKey: "", HTTPClient: customHTTPClient, Endpoint: gcmEndpoint}},
-		},
-		{
-			Config{Endpoint: customURL},
-			&Client{&Config{APIKey: "", HTTPClient: http.DefaultClient, Endpoint: customURL}},
-		},
-		{
-			Config{APIKey: apiKey, Endpoint: customURL, HTTPClient: customHTTPClient},
-			&Client{&Config{APIKey: apiKey, HTTPClient: customHTTPClient, Endpoint: customURL}},
-		},
-	}
-
-	for _, tt := range clientTests {
-		have, want := NewClient(tt.opts), tt.out
-		if !reflect.DeepEqual(have, want) {
-			t.Errorf("NewClient(%q): have: %#v, want: %#v\n", tt.opts, have, want)
-		}
-	}
-}
-
 func TestCreateHTTPRequest(t *testing.T) {
-	msg, endpoint, apiKey := &Message{}, gcmEndpoint, "foo"
+	msg, endpoint, apiKey := &Message{}, defaultConfig.SendEndpoint, "foo"
 
 	req, err := createHTTPRequest(msg, endpoint, apiKey)
 
@@ -127,7 +92,7 @@ func TestSend(t *testing.T) {
 	for _, tt := range sendTests {
 		server, httpClient := mockHTTPServerAndClient(tt.response)
 
-		client := NewClient(Config{HTTPClient: httpClient, Endpoint: server.URL})
+		client := NewClient(Config{HTTPClient: httpClient, SendEndpoint: server.URL, MaxRetries: -1})
 
 		haveRes, haveErr := client.Send(&Message{})
 		server.Close()
@@ -178,7 +143,7 @@ func TestRetry(t *testing.T) {
 
 		opts := tt.clientConfig
 
-		opts.Endpoint = server.URL
+		opts.SendEndpoint = server.URL
 		opts.HTTPClient = httpClient
 
 		client := NewClient(opts)

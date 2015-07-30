@@ -8,32 +8,45 @@ import (
 	"time"
 )
 
-const (
-	gcmEndpoint = "https://gcm-http.googleapis.com/gcm/send"
-)
-
 // The Client type encapsulates
 type Client struct {
 	config *Config
 }
 
 type Config struct {
-	APIKey     string
-	HTTPClient *http.Client
-	Endpoint   string
-	MaxRetries uint
+	APIKey       string
+	HTTPClient   *http.Client
+	MaxRetries   int
+	SendEndpoint string
+}
+
+var defaultConfig = Config{
+	HTTPClient:   http.DefaultClient,
+	MaxRetries:   5,
+	SendEndpoint: "https://gcm-http.googleapis.com/gcm/send",
 }
 
 func NewClient(config Config) *Client {
-	if config.HTTPClient == nil {
-		config.HTTPClient = http.DefaultClient
-	}
-
-	if config.Endpoint == "" {
-		config.Endpoint = gcmEndpoint
-	}
-
+	merge(&config, &defaultConfig)
 	return &Client{config: &config}
+}
+
+func merge(base, newcfg *Config) {
+	if base.APIKey == "" {
+		base.APIKey = newcfg.APIKey
+	}
+
+	if base.HTTPClient == nil {
+		base.HTTPClient = newcfg.HTTPClient
+	}
+
+	if base.MaxRetries == 0 {
+		base.MaxRetries = newcfg.MaxRetries
+	}
+
+	if base.SendEndpoint == "" {
+		base.SendEndpoint = newcfg.SendEndpoint
+	}
 }
 
 func (c *Client) Send(message *Message) (*response, *gcmError) {
@@ -48,7 +61,7 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 			return nil, err
 		}
 
-		if r == c.config.MaxRetries {
+		if r >= uint(c.config.MaxRetries) {
 			return nil, err
 		}
 
@@ -58,7 +71,7 @@ func (c *Client) Send(message *Message) (*response, *gcmError) {
 }
 
 func (c *Client) doSend(message *Message) (*response, *gcmError) {
-	req, err := createHTTPRequest(message, c.config.Endpoint, c.config.APIKey)
+	req, err := createHTTPRequest(message, c.config.SendEndpoint, c.config.APIKey)
 
 	if err != nil {
 		return nil, newError(ErrorUnknown, err.Error())
